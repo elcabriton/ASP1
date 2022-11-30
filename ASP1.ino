@@ -9,7 +9,9 @@ int pinDP = 6;
 int verde = 12;
 int contador=0;
 int count=0;    //TIMER
-int interrupcao=2;//INT0
+int interrupcaoM=2;//INT0++1
+int interrupcaoD=18;//INT1--1
+int pinChange=53;
 
 void setup() {
   //CONFIGURANDO OS 7 segmentos
@@ -23,15 +25,17 @@ void setup() {
   pinMode(verde, OUTPUT);//ajuda para ver se ta funcionando
   pinMode(pinDP, OUTPUT);
 
-  pinMode(interrupcao, INPUT_PULLUP);//INTO
+  pinMode(interrupcaoM, INPUT_PULLUP);//INTO
+  pinMode(interrupcaoD, INPUT_PULLUP);//INT1
   //INTERRUPCAO INT0
   //INTO, INT1
  
-  attachInterrupt(digitalPinToInterrupt(interrupcao),botaoAcionado,RISING);
+  attachInterrupt(digitalPinToInterrupt(interrupcaoM),botaoAcionadomais,RISING);
 
                                                                   //FALLING
                                                                   //LOW
                                                                   //CHANGE
+  attachInterrupt(digitalPinToInterrupt(interrupcaoD),botaoAcionadomenos,RISING);
 
   
   //TIMER
@@ -44,6 +48,16 @@ void setup() {
   // 10000 ms / 4.09 ms/interrupcao = +-245 
   // 245 ciclos teremos 1S  
 
+//PINCHANGE
+ pinMode(pinChange, INPUT_PULLUP);
+  PCICR |= B00000001; // PCINT0-7
+  PCMSK0 |= B00000001; // pino 53
+
+
+PCMSK0|= (1<<PCINT0);
+// InitialiseInterrupt();
+
+
 
 }
 
@@ -54,7 +68,16 @@ void loop() {
 
       
 }
-void botaoAcionado()
+void botaoAcionadomais()
+{
+  static unsigned long delayEstado;
+  if((millis()-delayEstado)>1000){
+    
+  contador++;
+  delayEstado=millis();}
+  
+}
+void botaoAcionadomenos()
 {
   static unsigned long delayEstado;
   if((millis()-delayEstado)>1000){
@@ -63,58 +86,25 @@ void botaoAcionado()
   }
 }
 
-  
-  
-  
-
-      
- 
-
 ISR(TIMER1_OVF_vect)//interrupção do TIMER1 
 { 
-   if(count==245){//H
+   if(count==245){
      contador++;
+     count=0;
    }
-   if(count==490){//E
-     contador++;
-   }
-   if(count==735){//L
-     contador++;
-   }
-   if(count==980){//L
-     contador++;
-   }
-   if(count==1225){//O
-     contador++;
-   }
-   if(count==1470){//A
-     contador++;
-   }
-   if(count==1715){//T
-     contador++;
-   }
-   if(count==1960){//3
-     contador++;
-   }
-   if(count==2205){//2
-     contador++;
-   }
-   if(count==2450){//8
-     contador++;
-   }
-   if(count==2695){//P
-     contador++;
-   }
+   
 
   
 
   
 
   count++;
-  TCNT1=0;
+  
 }
-
-
+// Interrupção por Pin Change 
+ISR(PCINT0_vect){
+  contador=1;
+}
 
 void status(){
   if (contador==0){
